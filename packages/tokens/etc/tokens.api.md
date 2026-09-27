@@ -403,6 +403,12 @@ export type HorizontalSpacingTokens = {
 };
 
 // @public (undocumented)
+export const lilacDarkTheme: Theme;
+
+// @public (undocumented)
+export const lilacLightTheme: Theme;
+
+// @public (undocumented)
 export type LineHeightTokens = {
     lineHeightBase100: string;
     lineHeightBase200: string;

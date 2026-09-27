@@ -54,6 +54,8 @@ import { FontFamilyTokens } from '@fluentui/tokens';
 import { FontSizeTokens } from '@fluentui/tokens';
 import { FontWeightTokens } from '@fluentui/tokens';
 import { HorizontalSpacingTokens } from '@fluentui/tokens';
+import { lilacDarkTheme } from '@fluentui/tokens';
+import { lilacLightTheme } from '@fluentui/tokens';
 import { LineHeightTokens } from '@fluentui/tokens';
 import { PartialTheme } from '@fluentui/tokens';
 import { ShadowBrandTokens } from '@fluentui/tokens';
@@ -174,6 +176,10 @@ export { FontSizeTokens }
 export { FontWeightTokens }
 
 export { HorizontalSpacingTokens }
+
+export { lilacDarkTheme }
+
+export { lilacLightTheme }
 
 export { LineHeightTokens }
 
