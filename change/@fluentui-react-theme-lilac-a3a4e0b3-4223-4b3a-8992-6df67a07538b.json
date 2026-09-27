@@ -2,6 +2,6 @@
   "type": "minor",
   "comment": "feat: add Lilac light and dark themes",
   "packageName": "@fluentui/react-theme",
-  "email": "adamvavrinek@gmail.com",
+  "email": "magicofdesign@gmail.com",
   "dependentChangeType": "minor"
 }
