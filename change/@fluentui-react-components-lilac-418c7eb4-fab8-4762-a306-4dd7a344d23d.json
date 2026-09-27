@@ -2,6 +2,6 @@
   "type": "minor",
   "comment": "feat: export Lilac light and dark themes",
   "packageName": "@fluentui/react-components",
-  "email": "adamvavrinek@gmail.com",
+  "email": "magicofdesign@gmail.com",
   "dependentChangeType": "minor"
 }
