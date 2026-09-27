@@ -39,7 +39,10 @@ jobs:
             exit 1
           fi
 
-          latest=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name' 2>/dev/null || true)
+          latest=''
+          if ! latest=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name'); then
+            latest=''
+          fi
           latest=${latest#v}
           if [ -z "$latest" ]; then
             latest='0.0.0'
