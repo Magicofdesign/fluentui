@@ -11,7 +11,7 @@ module.exports = /** @type {Omit<import('../../../.storybook/main'), 'typescript
   ],
   staticDirs: ['../public'],
   build: {
-    previewUrl: process.env.DEPLOY_PATH,
+    previewUrl: process.env.DEPLOY_PATH ?? '/headless/',
   },
   webpackFinal: (config, options) => {
     const localConfig = /** @type config */ ({ ...headlessMain.webpackFinal(config, options) });

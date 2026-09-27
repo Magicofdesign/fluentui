@@ -93,7 +93,7 @@
     "start": "yarn start-storybook -p 6006 --docs",
     "start-storybook": "yarn run -T storybook dev",
     "build-storybook": "yarn analyze && yarn run -T storybook build -o ./dist/storybook --docs",
-    "build-storybook:docsite": "yarn analyze && yarn run -T cross-env DEPLOY_PATH=/web-components/ storybook build -o ./dist/storybook --docs",
+    "build-storybook:docsite": "yarn analyze && yarn run -T storybook build -o ./dist/storybook --docs",
     "e2e": "node ./scripts/e2e.js",
     "e2e:local": "node ./scripts/e2e.js --ui"
   },

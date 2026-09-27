@@ -1,82 +1,275 @@
-# Workflow name
-name: 'Docsite publish to Github Pages'
+name: Deploy Storybooks to GitHub Pages
 
 on:
-  push:
-    branches:
-      - master
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      staging_ref:
+        description: Immutable master commit to publish at /staging/.
+        required: true
+        type: string
+      release_ref:
+        description: Immutable tag or commit to publish at /release/.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# A standalone deployment must not race a release workflow. A called workflow is
+# already serialized by its release-workflow caller, so it uses a private group.
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && 'fluentui-storybook-pages' || format('fluentui-storybook-pages-child-{0}', github.run_id) }}
+  cancel-in-progress: false
+
+env:
+  PAGES_BASE_PATH: /${{ github.event.repository.name }}
+  PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
 
 jobs:
-  build:
+  resolve-refs:
     runs-on: ubuntu-latest
     outputs:
-      artifact_id: ${{ steps.artifact_upload.outputs.artifact_id }}
+      staging_ref: ${{ steps.refs.outputs.staging_ref }}
+      release_ref: ${{ steps.refs.outputs.release_ref }}
+      has_release: ${{ steps.refs.outputs.has_release }}
+    steps:
+      - name: Resolve immutable Storybook source refs
+        id: refs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_STAGING_REF: ${{ inputs.staging_ref }}
+          REQUESTED_RELEASE_REF: ${{ inputs.release_ref }}
+        run: |
+          set -euo pipefail
 
+          staging_ref="$REQUESTED_STAGING_REF"
+          if [ -z "$staging_ref" ]; then
+            staging_ref=$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/master" --jq '.object.sha')
+          fi
+
+          release_ref="$REQUESTED_RELEASE_REF"
+          if [ -z "$release_ref" ]; then
+            release_ref=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name' 2>/dev/null || true)
+          fi
+
+          echo "staging_ref=$staging_ref" >> "$GITHUB_OUTPUT"
+          echo "release_ref=$release_ref" >> "$GITHUB_OUTPUT"
+          if [ -n "$release_ref" ]; then
+            echo 'has_release=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'has_release=false' >> "$GITHUB_OUTPUT"
+          fi
+
+  build-staging:
+    needs: resolve-refs
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          fetch-depth: 0
-
-      - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@826660b82addbef3abff5fa871492ebad618c9e1 # v4.3.3
-        with:
-          main-branch-name: 'master'
+          ref: ${{ needs.resolve-refs.outputs.staging_ref }}
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: '22'
-          cache: 'yarn'
+          cache: yarn
 
       - name: Install packages
         run: yarn install --immutable
 
-      - name: Install Playwright Browsers
-        run: yarn playwright install --with-deps
+      - name: Build React v9 staging Storybook
+        env:
+          DEPLOY_PATH: ${{ env.PAGES_BASE_PATH }}/staging/
+          STORYBOOK_SUMMARY_BASE_URL: ${{ env.PAGES_URL }}/staging/
+          CHARTS_STORYBOOK_URL: ${{ env.PAGES_URL }}/release/charts/
+        run: yarn nx run public-docsite-v9:build-storybook --skip-nx-cache
 
-      - name: Affected Deployable Storybooks
-        id: affected_storybooks_count
+      - name: Upload staging Storybook
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: storybook-staging
+          path: apps/public-docsite-v9/dist/react
+          if-no-files-found: error
+          retention-days: 1
+
+  build-release:
+    needs: resolve-refs
+    if: needs.resolve-refs.outputs.has_release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ needs.resolve-refs.outputs.release_ref }}
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: yarn
+
+      - name: Install packages
+        run: yarn install --immutable
+
+      - name: Build release Storybooks
+        env:
+          DEPLOY_PATH: ${{ env.PAGES_BASE_PATH }}/release/
+          STORYBOOK_SUMMARY_BASE_URL: ${{ env.PAGES_URL }}/release/
+          CHARTS_STORYBOOK_URL: ${{ env.PAGES_URL }}/release/charts/
         run: |
-          affected_count=$(yarn nx show projects -t build-storybook:docsite --affected --verbose false | wc -l | tr -d ' ')
-          echo "value=$affected_count" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          yarn nx run public-docsite-v9:build-storybook --skip-nx-cache
 
-      - name: Build affected storybooks
-        if: steps.affected_storybooks_count.outputs.value > 0
+          DEPLOY_PATH="${PAGES_BASE_PATH}/release/charts/" \
+          STORYBOOK_SUMMARY_BASE_URL="${PAGES_URL}/release/charts/" \
+          yarn nx run chart-docsite:build-storybook:docsite --skip-nx-cache
+
+          DEPLOY_PATH="${PAGES_BASE_PATH}/release/web-components/" \
+          yarn nx run web-components:build-storybook:docsite --skip-nx-cache
+
+          DEPLOY_PATH="${PAGES_BASE_PATH}/release/headless/" \
+          STORYBOOK_SUMMARY_BASE_URL="${PAGES_URL}/release/headless/" \
+          yarn nx run public-docsite-v9-headless:build-storybook:docsite --skip-nx-cache
+
+      - name: Upload released React Storybook
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: storybook-release-react
+          path: apps/public-docsite-v9/dist/react
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload released Charts Storybook
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: storybook-release-charts
+          path: apps/chart-docsite/dist/storybook
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload released Web Components Storybook
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: storybook-release-web-components
+          path: packages/web-components/dist/storybook
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload released Headless Storybook
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: storybook-release-headless
+          path: apps/public-docsite-v9-headless/dist/storybook
+          if-no-files-found: error
+          retention-days: 1
+
+  assemble:
+    needs: [resolve-refs, build-staging, build-release]
+    if: >-
+      always() && needs.build-staging.result == 'success' &&
+      (needs.resolve-refs.outputs.has_release != 'true' || needs.build-release.result == 'success')
+    runs-on: ubuntu-latest
+    outputs:
+      artifact_id: ${{ steps.pages-artifact.outputs.artifact_id }}
+    steps:
+      - name: Download staging Storybook
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: storybook-staging
+          path: _artifacts/staging
+
+      - name: Download released React Storybook
+        if: needs.resolve-refs.outputs.has_release == 'true'
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: storybook-release-react
+          path: _artifacts/release/react
+
+      - name: Download released Charts Storybook
+        if: needs.resolve-refs.outputs.has_release == 'true'
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: storybook-release-charts
+          path: _artifacts/release/charts
+
+      - name: Download released Web Components Storybook
+        if: needs.resolve-refs.outputs.has_release == 'true'
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: storybook-release-web-components
+          path: _artifacts/release/web-components
+
+      - name: Download released Headless Storybook
+        if: needs.resolve-refs.outputs.has_release == 'true'
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: storybook-release-headless
+          path: _artifacts/release/headless
+
+      - name: Assemble Pages artifact
+        env:
+          RELEASE_REF: ${{ needs.resolve-refs.outputs.release_ref }}
+          HAS_RELEASE: ${{ needs.resolve-refs.outputs.has_release }}
         run: |
-          yarn nx run-many -t build-storybook:docsite --nxBail
+          set -euo pipefail
+          mkdir -p _pages/staging
+          cp -R _artifacts/staging/. _pages/staging/
+          touch _pages/.nojekyll
 
-      - name: Prepare Artifact
-        if: steps.affected_storybooks_count.outputs.value > 0
+          if [ "$HAS_RELEASE" = true ]; then
+            mkdir -p _pages/release/{charts,web-components,headless}
+            cp -R _artifacts/release/react/. _pages/release/
+            cp -R _artifacts/release/charts/. _pages/release/charts/
+            cp -R _artifacts/release/web-components/. _pages/release/web-components/
+            cp -R _artifacts/release/headless/. _pages/release/headless/
+          fi
+
+          cat > _pages/index.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+            <head><meta charset="utf-8"><title>Fluent UI Storybooks</title></head>
+            <body>
+              <h1>Fluent UI Storybooks</h1>
+              <ul>
+                <li><a href="./staging/">Staging: React v9</a></li>
+                <li id="release-link"><a href="./release/">Release: React v9</a></li>
+              </ul>
+            </body>
+          </html>
+          EOF
+
+          if [ "$HAS_RELEASE" != true ]; then
+            sed -i '/id="release-link"/c\                <li id="release-link">Release: no official release yet</li>' _pages/index.html
+          fi
+
+      - name: Verify assembled entry points
         run: |
-          rm -rf _pages
-          mkdir -p _pages/react _pages/charts _pages/web-components _pages/headless
+          set -euo pipefail
+          test -f _pages/index.html
+          test -f _pages/staging/index.html
+          if [ "${{ needs.resolve-refs.outputs.has_release }}" = true ]; then
+            test -f _pages/release/index.html
+            test -f _pages/release/charts/index.html
+            test -f _pages/release/web-components/index.html
+            test -f _pages/release/headless/index.html
+          fi
 
-          cp -R apps/public-docsite-v9/dist/react/* _pages/react/
-          cp -R apps/chart-docsite/dist/storybook/* _pages/charts/
-          cp -R packages/web-components/dist/storybook/* _pages/web-components
-          cp -R apps/public-docsite-v9-headless/dist/storybook/* _pages/headless/
-
-      - name: Upload Pages Artifact
-        if: steps.affected_storybooks_count.outputs.value > 0
-        id: artifact_upload
+      - name: Upload Pages artifact
+        id: pages-artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
           path: _pages
 
   deploy:
+    needs: assemble
+    if: needs.assemble.outputs.artifact_id
     runs-on: ubuntu-latest
-    needs: build
-    if: needs.build.outputs.artifact_id
-    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:
-      pages: write # to deploy to Pages
-      id-token: write # to verify the deployment originates from an appropriate source
-
-    # Deploy to the github-pages environment
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

@@ -1,0 +1,99 @@
+name: Create Storybook Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Semantic version bump to release.
+        required: true
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fluentui-storybook-pages
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      target_sha: ${{ steps.release.outputs.target_sha }}
+    steps:
+      - name: Calculate version and create resumable draft release
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUMP: ${{ inputs.bump }}
+        run: |
+          set -euo pipefail
+
+          if [ "$GITHUB_REF" != 'refs/heads/master' ]; then
+            echo 'Releases must be dispatched from master.' >&2
+            exit 1
+          fi
+
+          latest=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name' 2>/dev/null || true)
+          latest=${latest#v}
+          if [ -z "$latest" ]; then
+            latest='0.0.0'
+          fi
+
+          if ! [[ "$latest" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+            echo "Latest release must use vMAJOR.MINOR.PATCH; found: $latest" >&2
+            exit 1
+          fi
+
+          major=${BASH_REMATCH[1]}
+          minor=${BASH_REMATCH[2]}
+          patch=${BASH_REMATCH[3]}
+          case "$BUMP" in
+            major) major=$((major + 1)); minor=0; patch=0 ;;
+            minor) minor=$((minor + 1)); patch=0 ;;
+            patch) patch=$((patch + 1)) ;;
+            *) echo "Unsupported bump: $BUMP" >&2; exit 1 ;;
+          esac
+
+          version="v${major}.${minor}.${patch}"
+          target_sha="${GITHUB_SHA}"
+
+          if gh release view "$version" --json isDraft,targetCommitish >/dev/null 2>&1; then
+            is_draft=$(gh api --jq '.isDraft' /repos/${GITHUB_REPOSITORY}/releases/tags/${version})
+            existing_target=$(gh api --jq '.target_commitish' /repos/${GITHUB_REPOSITORY}/releases/tags/${version})
+            if [ "$is_draft" != true ] || [ "$existing_target" != "$target_sha" ]; then
+              echo "Release $version already exists for a different state." >&2
+              exit 1
+            fi
+          else
+            gh release create "$version" --target "$target_sha" --draft --generate-notes --title "$version"
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "target_sha=$target_sha" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: prepare
+    uses: ./.github/workflows/docsite-publish-ghpages.yml
+    with:
+      staging_ref: ${{ needs.prepare.outputs.target_sha }}
+      release_ref: ${{ needs.prepare.outputs.target_sha }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+  publish:
+    needs: [prepare, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: gh release edit "$VERSION" --draft=false

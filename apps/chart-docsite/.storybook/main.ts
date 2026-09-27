@@ -6,7 +6,7 @@ import rootConfig from '../../../.storybook/main';
 const config = {
   ...rootConfig,
   build: {
-    previewUrl: process.env.DEPLOY_PATH,
+    previewUrl: process.env.DEPLOY_PATH ?? '/charts/',
   },
   stories: [
     // docsite stories

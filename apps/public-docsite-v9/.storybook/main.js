@@ -49,7 +49,7 @@ module.exports = /** @type {Omit<import('../../../.storybook/main'), 'typescript
   staticDirs: ['../public'],
   addons: [...rootMain.addons],
   build: {
-    previewUrl: process.env.DEPLOY_PATH,
+    previewUrl: process.env.DEPLOY_PATH ?? '/react/',
   },
   webpackFinal: (config, options) => {
     const localConfig = /** @type config */ ({ ...rootMain.webpackFinal(config, options) });
@@ -80,7 +80,7 @@ module.exports = /** @type {Omit<import('../../../.storybook/main'), 'typescript
     charts: {
       title: 'Charts v9',
       // Workaround to enable docsite using PR workflow till master workflow is enabled
-      url: 'https://storybooks.fluentui.dev/charts/',
+      url: process.env.CHARTS_STORYBOOK_URL ?? 'https://storybooks.fluentui.dev/charts/',
       expanded: false,
       sourceUrl: 'https://github.com/microsoft/fluentui/charts/react-charts',
     },

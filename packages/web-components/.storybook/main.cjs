@@ -16,7 +16,7 @@ module.exports =
     framework: '@storybook/html-vite',
     addons: ['@storybook/addon-docs'],
     build: {
-      previewUrl: process.env.DEPLOY_PATH,
+      previewUrl: process.env.DEPLOY_PATH ?? '/web-components/',
     },
     viteFinal: async config => {
       // Configure path aliases
