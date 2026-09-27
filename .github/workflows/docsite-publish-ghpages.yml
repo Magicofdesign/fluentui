@@ -50,7 +50,9 @@ jobs:
 
           release_ref="$REQUESTED_RELEASE_REF"
           if [ -z "$release_ref" ]; then
-            release_ref=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name' 2>/dev/null || true)
+            if ! release_ref=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name'); then
+              release_ref=''
+            fi
           fi
 
           echo "staging_ref=$staging_ref" >> "$GITHUB_OUTPUT"
@@ -77,6 +79,9 @@ jobs:
 
       - name: Install packages
         run: yarn install --immutable
+
+      - name: Install Playwright browser
+        run: yarn playwright install --with-deps chromium
 
       - name: Build React v9 staging Storybook
         env:
@@ -110,6 +115,9 @@ jobs:
 
       - name: Install packages
         run: yarn install --immutable
+
+      - name: Install Playwright browser
+        run: yarn playwright install --with-deps chromium
 
       - name: Build release Storybooks
         env:
@@ -169,8 +177,6 @@ jobs:
       always() && needs.build-staging.result == 'success' &&
       (needs.resolve-refs.outputs.has_release != 'true' || needs.build-release.result == 'success')
     runs-on: ubuntu-latest
-    outputs:
-      artifact_id: ${{ steps.pages-artifact.outputs.artifact_id }}
     steps:
       - name: Download staging Storybook
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
@@ -255,14 +261,13 @@ jobs:
           fi
 
       - name: Upload Pages artifact
-        id: pages-artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
           path: _pages
 
   deploy:
     needs: assemble
-    if: needs.assemble.outputs.artifact_id
+    if: always() && needs.assemble.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       pages: write
