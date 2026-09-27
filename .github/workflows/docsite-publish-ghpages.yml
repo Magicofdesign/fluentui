@@ -177,8 +177,6 @@ jobs:
       always() && needs.build-staging.result == 'success' &&
       (needs.resolve-refs.outputs.has_release != 'true' || needs.build-release.result == 'success')
     runs-on: ubuntu-latest
-    outputs:
-      artifact_id: ${{ steps.pages-artifact.outputs.artifact_id }}
     steps:
       - name: Download staging Storybook
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
@@ -263,14 +261,13 @@ jobs:
           fi
 
       - name: Upload Pages artifact
-        id: pages-artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
           path: _pages
 
   deploy:
     needs: assemble
-    if: needs.assemble.outputs.artifact_id
+    if: needs.assemble.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       pages: write
