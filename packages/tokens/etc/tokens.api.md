@@ -417,6 +417,12 @@ export type LineHeightTokens = {
 };
 
 // @public (undocumented)
+export const lilacDarkTheme: Theme;
+
+// @public (undocumented)
+export const lilacLightTheme: Theme;
+
+// @public (undocumented)
 export type PartialTheme = Partial<Theme>;
 
 // @public (undocumented)
