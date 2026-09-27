@@ -50,7 +50,9 @@ jobs:
 
           release_ref="$REQUESTED_RELEASE_REF"
           if [ -z "$release_ref" ]; then
-            release_ref=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name' 2>/dev/null || true)
+            if ! release_ref=$(gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name'); then
+              release_ref=''
+            fi
           fi
 
           echo "staging_ref=$staging_ref" >> "$GITHUB_OUTPUT"
