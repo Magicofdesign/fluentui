@@ -267,7 +267,7 @@ jobs:
 
   deploy:
     needs: assemble
-    if: needs.assemble.result == 'success'
+    if: always() && needs.assemble.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       pages: write
