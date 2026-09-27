@@ -26,6 +26,12 @@ jobs:
       version: ${{ steps.release.outputs.version }}
       target_sha: ${{ steps.release.outputs.target_sha }}
     steps:
+      # `gh release create` creates the tag locally before pushing it. A checkout
+      # is therefore required even though this job otherwise only uses the API.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Calculate version and create resumable draft release
         id: release
         env:
