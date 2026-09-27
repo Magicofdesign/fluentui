@@ -87,14 +87,28 @@ jobs:
         env:
           DEPLOY_PATH: ${{ env.PAGES_BASE_PATH }}/staging/
           STORYBOOK_SUMMARY_BASE_URL: ${{ env.PAGES_URL }}/staging/
-          CHARTS_STORYBOOK_URL: ${{ env.PAGES_URL }}/release/charts/
+          CHARTS_STORYBOOK_URL: ${{ env.PAGES_URL }}/staging/charts/
         run: yarn nx run public-docsite-v9:build-storybook --skip-nx-cache
+
+      - name: Build Charts staging Storybook
+        env:
+          DEPLOY_PATH: ${{ env.PAGES_BASE_PATH }}/staging/charts/
+          STORYBOOK_SUMMARY_BASE_URL: ${{ env.PAGES_URL }}/staging/charts/
+        run: yarn nx run chart-docsite:build-storybook:docsite --skip-nx-cache
 
       - name: Upload staging Storybook
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: storybook-staging
           path: apps/public-docsite-v9/dist/react
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload staging Charts Storybook
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: storybook-staging-charts
+          path: apps/chart-docsite/dist/storybook
           if-no-files-found: error
           retention-days: 1
 
@@ -184,6 +198,12 @@ jobs:
           name: storybook-staging
           path: _artifacts/staging
 
+      - name: Download staging Charts Storybook
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: storybook-staging-charts
+          path: _artifacts/staging-charts
+
       - name: Download released React Storybook
         if: needs.resolve-refs.outputs.has_release == 'true'
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
@@ -218,8 +238,9 @@ jobs:
           HAS_RELEASE: ${{ needs.resolve-refs.outputs.has_release }}
         run: |
           set -euo pipefail
-          mkdir -p _pages/staging
+          mkdir -p _pages/staging/charts
           cp -R _artifacts/staging/. _pages/staging/
+          cp -R _artifacts/staging-charts/. _pages/staging/charts/
           touch _pages/.nojekyll
 
           if [ "$HAS_RELEASE" = true ]; then
@@ -253,6 +274,7 @@ jobs:
           set -euo pipefail
           test -f _pages/index.html
           test -f _pages/staging/index.html
+          test -f _pages/staging/charts/index.html
           if [ "${{ needs.resolve-refs.outputs.has_release }}" = true ]; then
             test -f _pages/release/index.html
             test -f _pages/release/charts/index.html
