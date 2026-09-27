@@ -6,3 +6,4 @@ export {
   teamsLightV21Theme,
 } from './teams/index';
 export { webDarkTheme, webLightTheme } from './web/index';
+export { lilacDarkTheme, lilacLightTheme } from './lilac/index';

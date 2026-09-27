@@ -75,3 +75,22 @@ export const brandTeamsV21: BrandVariants = {
   150: `#dcdbff`,
   160: `#e8e8ff`,
 };
+
+export const lilacTheme: BrandVariants = {
+  10: '#2B1557',
+  20: '#331865',
+  30: '#3A1E70',
+  40: '#442384',
+  50: '#4D2D9F',
+  60: '#5837C3',
+  70: '#6240E8',
+  80: '#6B4CF6',
+  90: '#7F77F9',
+  100: '#8C86FD',
+  110: '#9996FD',
+  120: '#ABA9FE',
+  130: '#BBB9FE',
+  140: '#C9C8FE',
+  150: '#E2E1FE',
+  160: '#EDEDFF',
+};

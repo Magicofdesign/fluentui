@@ -4,6 +4,8 @@ export {
   teamsHighContrastTheme,
   teamsLightTheme,
   teamsLightV21Theme,
+  lilacDarkTheme,
+  lilacLightTheme,
   webDarkTheme,
   webLightTheme,
 } from './themes';
