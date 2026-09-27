@@ -1,0 +1,7 @@
+{
+  "type": "none",
+  "comment": "feat: add Lilac light and dark themes",
+  "packageName": "@fluentui/tokens",
+  "email": "adamvavrinek@gmail.com",
+  "dependentChangeType": "minor"
+}

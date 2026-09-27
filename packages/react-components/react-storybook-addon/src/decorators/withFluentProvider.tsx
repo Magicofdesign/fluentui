@@ -9,6 +9,8 @@ import {
   teamsHighContrastTheme,
   teamsLightTheme,
   teamsLightV21Theme,
+  lilacDarkTheme,
+  lilacLightTheme,
   webDarkTheme,
   webLightTheme,
 } from '@fluentui/react-theme';
@@ -26,6 +28,8 @@ const themes: Record<ThemeIds, Theme> = {
   'teams-high-contrast': teamsHighContrastTheme,
   'teams-light-v21': teamsLightV21Theme,
   'teams-dark-v21': teamsDarkV21Theme,
+  'lilac-light': lilacLightTheme,
+  'lilac-dark': lilacDarkTheme,
 } as const;
 
 const findTheme = (themeId?: ThemeIds) => {

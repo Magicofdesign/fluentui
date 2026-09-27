@@ -66,6 +66,8 @@ export {
   teamsHighContrastTheme,
   teamsLightTheme,
   teamsLightV21Theme,
+  lilacDarkTheme,
+  lilacLightTheme,
   tokens,
   typographyStyles,
   webDarkTheme,

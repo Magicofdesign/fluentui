@@ -6,6 +6,8 @@ export const themes = [
   { id: 'teams-light-v21', label: 'Teams Light V2.1' },
   { id: 'teams-dark-v21', label: 'Teams Dark V2.1' },
   { id: 'teams-high-contrast', label: 'Teams High Contrast' },
+  { id: 'lilac-light', label: 'Lilac Light' },
+  { id: 'lilac-dark', label: 'Lilac Dark' },
 ] as const;
 
 export const defaultTheme = themes[0];
