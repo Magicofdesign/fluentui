@@ -538,6 +538,8 @@ import { LabelState } from '@fluentui/react-label';
 import { LargeTitle } from '@fluentui/react-text';
 import { largeTitleClassNames } from '@fluentui/react-text';
 import { LineHeightTokens } from '@fluentui/react-theme';
+import { lilacDarkTheme } from '@fluentui/react-theme';
+import { lilacLightTheme } from '@fluentui/react-theme';
 import { Link } from '@fluentui/react-link';
 import { linkClassNames } from '@fluentui/react-link';
 import { LinkProps } from '@fluentui/react-link';
@@ -3099,6 +3101,10 @@ export { LargeTitle }
 export { largeTitleClassNames }
 
 export { LineHeightTokens }
+
+export { lilacDarkTheme }
+
+export { lilacLightTheme }
 
 export { Link }
 
