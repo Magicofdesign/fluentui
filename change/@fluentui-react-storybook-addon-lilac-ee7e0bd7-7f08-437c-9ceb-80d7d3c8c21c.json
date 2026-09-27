@@ -2,6 +2,6 @@
   "type": "minor",
   "comment": "feat: add Lilac light and dark themes to the theme picker",
   "packageName": "@fluentui/react-storybook-addon",
-  "email": "adamvavrinek@gmail.com",
+  "email": "magicofdesign@gmail.com",
   "dependentChangeType": "minor"
 }
