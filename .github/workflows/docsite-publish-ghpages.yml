@@ -16,10 +16,11 @@ on:
 permissions:
   contents: read
 
-# A standalone deployment must not race a release workflow. A called workflow is
-# already serialized by its release-workflow caller, so it uses a private group.
+# A standalone deployment must not race a release workflow. GitHub preserves the
+# caller's event name in a reusable workflow, so its supplied refs—not
+# `github.event_name`—identify calls that need a private group.
 concurrency:
-  group: ${{ github.event_name == 'workflow_dispatch' && 'fluentui-storybook-pages' || format('fluentui-storybook-pages-child-{0}', github.run_id) }}
+  group: ${{ inputs.staging_ref != '' && format('fluentui-storybook-pages-child-{0}', github.run_id) || 'fluentui-storybook-pages' }}
   cancel-in-progress: false
 
 env:
