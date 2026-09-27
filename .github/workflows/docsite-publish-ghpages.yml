@@ -80,6 +80,9 @@ jobs:
       - name: Install packages
         run: yarn install --immutable
 
+      - name: Install Playwright browser
+        run: yarn playwright install --with-deps chromium
+
       - name: Build React v9 staging Storybook
         env:
           DEPLOY_PATH: ${{ env.PAGES_BASE_PATH }}/staging/
@@ -112,6 +115,9 @@ jobs:
 
       - name: Install packages
         run: yarn install --immutable
+
+      - name: Install Playwright browser
+        run: yarn playwright install --with-deps chromium
 
       - name: Build release Storybooks
         env:
