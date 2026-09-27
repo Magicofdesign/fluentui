@@ -540,8 +540,6 @@ import { largeTitleClassNames } from '@fluentui/react-text';
 import { lilacDarkTheme } from '@fluentui/react-theme';
 import { lilacLightTheme } from '@fluentui/react-theme';
 import { LineHeightTokens } from '@fluentui/react-theme';
-import { lilacDarkTheme } from '@fluentui/react-theme';
-import { lilacLightTheme } from '@fluentui/react-theme';
 import { Link } from '@fluentui/react-link';
 import { linkClassNames } from '@fluentui/react-link';
 import { LinkProps } from '@fluentui/react-link';
@@ -3107,10 +3105,6 @@ export { lilacDarkTheme }
 export { lilacLightTheme }
 
 export { LineHeightTokens }
-
-export { lilacDarkTheme }
-
-export { lilacLightTheme }
 
 export { Link }
 

@@ -57,8 +57,6 @@ import { HorizontalSpacingTokens } from '@fluentui/tokens';
 import { lilacDarkTheme } from '@fluentui/tokens';
 import { lilacLightTheme } from '@fluentui/tokens';
 import { LineHeightTokens } from '@fluentui/tokens';
-import { lilacDarkTheme } from '@fluentui/tokens';
-import { lilacLightTheme } from '@fluentui/tokens';
 import { PartialTheme } from '@fluentui/tokens';
 import { ShadowBrandTokens } from '@fluentui/tokens';
 import { ShadowTokens } from '@fluentui/tokens';
@@ -184,10 +182,6 @@ export { lilacDarkTheme }
 export { lilacLightTheme }
 
 export { LineHeightTokens }
-
-export { lilacDarkTheme }
-
-export { lilacLightTheme }
 
 export { PartialTheme }
 
