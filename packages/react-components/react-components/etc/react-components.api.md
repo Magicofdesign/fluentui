@@ -537,6 +537,8 @@ import { LabelSlots } from '@fluentui/react-label';
 import { LabelState } from '@fluentui/react-label';
 import { LargeTitle } from '@fluentui/react-text';
 import { largeTitleClassNames } from '@fluentui/react-text';
+import { lilacDarkTheme } from '@fluentui/react-theme';
+import { lilacLightTheme } from '@fluentui/react-theme';
 import { LineHeightTokens } from '@fluentui/react-theme';
 import { lilacDarkTheme } from '@fluentui/react-theme';
 import { lilacLightTheme } from '@fluentui/react-theme';
@@ -3099,6 +3101,10 @@ export { LabelState }
 export { LargeTitle }
 
 export { largeTitleClassNames }
+
+export { lilacDarkTheme }
+
+export { lilacLightTheme }
 
 export { LineHeightTokens }
 
