@@ -101,6 +101,9 @@ jobs:
     needs: [prepare, deploy]
     runs-on: ubuntu-latest
     steps:
+      # `gh release edit` also initializes a Git repository context.
+      - uses: actions/checkout@v4
+
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
